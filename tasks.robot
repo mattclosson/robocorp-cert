@@ -19,11 +19,25 @@ Order robots from RobotSpareBin Industries Inc
 *** Keywords ***
 Open RobotSpareBin
     ${url}=    Get Secret    url
-    Open Available Browser    ${url}
+    Open Available Browser    ${url}[url]
 
 Download CSV
     ${url_input}=    Get Value From User    Add your CSV url:
     Download    ${url_input}    overwrite=True
+
+Fill the form with CSV data
+    ${robot_orders}=    Read table from CSV    orders.csv    header=True
+    FOR    ${robot_order}    IN    @{robot_orders}
+        Exit Modal
+        Fill out the form for each order    ${robot_order}
+        Wait Until Keyword Succeeds    10x    .1s    Click Preview
+        Wait Until Keyword Succeeds    10x    .1s    Submit Order
+        ${pdf}=    Get Receipt and Save as PDF    ${robot_order}[Order number]
+        ${robot_image}=    Screenshot Robot Image    ${robot_order}[Order number]
+        Add Robot Image to PDF    ${pdf}    ${robot_image}
+        Next Order
+    END
+    Zip all receipts
 
 Exit Modal
     Wait and Click Button    //*[@id="root"]/div/div[2]/div/div/div/div/div/button[1]
@@ -71,17 +85,3 @@ Zip all receipts
 
 Close The Browser
     Close Browser
-
-Fill the form with CSV data
-    ${robot_orders}=    Read table from CSV    orders.csv    header=True
-    FOR    ${robot_order}    IN    @{robot_orders}
-        Exit Modal
-        Fill out the form for each order    ${robot_order}
-        Wait Until Keyword Succeeds    10x    .1s    Click Preview
-        Wait Until Keyword Succeeds    10x    .1s    Submit Order
-        ${pdf}=    Get Receipt and Save as PDF    ${robot_order}[Order number]
-        ${robot_image}=    Screenshot Robot Image    ${robot_order}[Order number]
-        Add Robot Image to PDF    ${pdf}    ${robot_image}
-        Next Order
-    END
-    Zip all receipts
